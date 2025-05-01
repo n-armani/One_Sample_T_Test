@@ -38,17 +38,35 @@ tail_type <- readline(prompt = "Enter the type of test (Two Tail, Right Tail, or
 alpha <- as.numeric(readline(prompt = "Enter the significance level (alpha, e.g., 0.05): "))
 
 # 3. Calculate t-statistic
-t_stat <- (sample_prop - pop_prop) / (sqrt((pop_prop*(1-pop_prop))/n))
+SE <- sqrt((pop_prop*(1-pop_prop))/n)
+t_stat <- (sample_prop - pop_prop) / SE
 df <- n - 1
 
-# 4. Calculate p-value based on tail type
+# 4. Calculate Confidence Interval
+if (alpha == 0.05) {
+  
+  SEM <- 1.96*SE
+  
+}else {
+  
+  SEM <- 2.58*SE
+  
+}
+
+CI <- paste0("[", 
+             (pop_prop - round(SEM, 2)),
+             " : ", 
+             (pop_prop + round(SEM, 2)),
+             "]")
+
+# 5. Calculate p-value based on tail type
 p_value <- switch(tail_type,
                   "Two Tail" = 2 * pt(-abs(t_stat), df),
                   "Right Tail" = 1 - pt(t_stat, df),
                   "Left Tail" = pt(t_stat, df),
                   stop("Invalid tail type"))
 
-# 5. Generate hypotheses based on test type
+# 6. Generate hypotheses based on test type
 if (tail_type == "Two Tail") {
   H0 <- "H0: Sample mean = Population mean"
   H1 <- "H1: Sample mean ≠ Population mean"
@@ -62,16 +80,17 @@ if (tail_type == "Two Tail") {
   stop("Invalid test type. Use 'two', 'left', or 'right'.")
 }
 
-# 6. Generate the conclusion as a string
+# 7. Generate the conclusion as a string
 conclusion <- ifelse(p_value < alpha,
                      paste("Reject the null hypothesis at alpha =", alpha),
                      paste("Fail to reject the null hypothesis at alpha =", alpha))
 
-# 7. Create a summary table
+# 8. Create a summary table
 summary_table <- data.frame(Metric = c("H₀",
                                        "H₁",
-                                       "Sample Proportion",
                                        "Population Proportion",
+                                       "Sample Proportion",
+                                       "Confidence Interval",
                                        "Sample Size",
                                        "Degrees of Freedom",
                                        "T-Statistic",
@@ -81,8 +100,9 @@ summary_table <- data.frame(Metric = c("H₀",
                                        "Conclusion"),
                             Value = c(H0,
                                       H1,
-                                      sample_prop,
                                       pop_prop,
+                                      sample_prop,
+                                      CI,
                                       n,
                                       df,
                                       round(t_stat, 
@@ -98,6 +118,3 @@ Sum_table <- kable(summary_table,
                    format = "simple")
 cat('\014')
 print(Sum_table)
-
-
-
